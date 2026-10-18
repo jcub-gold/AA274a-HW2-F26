@@ -12,7 +12,8 @@ def find_closest_nominal_state(state, nominal_states):
         norm of the full state difference
     """
     ########## Code starts here ##########
-    raise NotImplementedError
+    j = np.argmin(np.linalg.norm(nominal_states - state, axis=1))
+    return j
     ########## Code ends here ##########
 
 
@@ -27,7 +28,8 @@ def compute_lqr_gain(A, B, Q, R):
     HINT: use solve_continuous_are (imported above).
     """
     ########## Code starts here ##########
-    raise NotImplementedError
+    P = solve_continuous_are(A, B, Q, R)
+    K = np.linalg.inv(R) @ B.T @ P
     ########## Code ends here ##########
     return K
 
@@ -53,7 +55,10 @@ def compute_gain_schedule(planar_quad, nominal_states, nominal_controls, Q, R):
     """
     gains = []
     ########## Code starts here ##########
-    raise NotImplementedError
+    for j in range(nominal_states.shape[0]):
+        A, B = planar_quad.get_continuous_jacobians(nominal_states[j], nominal_control_at(j, nominal_controls, planar_quad))
+        K = compute_lqr_gain(A, B, Q, R)
+        gains.append(K)
     ########## Code ends here ##########
     return gains
 
@@ -65,7 +70,8 @@ def compute_hover_gain(planar_quad, Q, R):
         (zero velocity and pitch, thrust planar_quad.hover_control).
     """
     ########## Code starts here ##########
-    raise NotImplementedError
+    A, B = planar_quad.get_continuous_jacobians(np.zeros(planar_quad.x_dim), planar_quad.hover_control)
+    K = compute_lqr_gain(A, B, Q, R)
     ########## Code ends here ##########
     return K
 
@@ -81,6 +87,8 @@ def lqr_control(state, j, nominal_states, nominal_controls, gains, planar_quad):
         Control (u_dim,). Do not clip; the simulator applies the thrust limits.
     """
     ########## Code starts here ##########
-    raise NotImplementedError
+    u_nominal = nominal_control_at(j, nominal_controls, planar_quad)
+    K = gains[j]
+    control = u_nominal - K @ (state - nominal_states[j])
     ########## Code ends here ##########
     return control

@@ -37,7 +37,12 @@ def cost(z: np.ndarray, alpha: float) -> float:
         Float cost value
     """
     ########## Code starts here ##########
-    raise NotImplementedError
+    t_f, s, u = unpack_decision_variables(z)
+    N = u.shape[0]
+    dt = t_f / N
+
+    J = t_f * alpha + dt * np.sum(u * u)
+    return J
     ########## Code ends here ##########
 
 
@@ -49,7 +54,19 @@ def dynamics_constraints(z: np.ndarray) -> np.ndarray:
         All entries are zero for a dynamically feasible z.
     """
     ########## Code starts here ##########
-    raise NotImplementedError
+    t_f, s, u = unpack_decision_variables(z)
+    N = u.shape[0]
+    dt = t_f / N
+    s_plus_one = s[1:, :]
+    s_minus_one = s[:-1, :]
+
+    def f(_s, _u):
+        f_x = _u[:, 0] * np.cos(_s[:, 2])
+        f_y = _u[:, 0] * np.sin(_s[:, 2])
+        f_theta = _u[:, 1]
+        return np.concatenate((f_x[:, None], f_y[:, None], f_theta[:, None]), axis=1)
+
+    return s_plus_one - (s_minus_one + dt * f(s_minus_one, u))
     ########## Code ends here ##########
 
 
@@ -59,7 +76,10 @@ def boundary_constraints(z: np.ndarray, s_0: np.ndarray, s_f: np.ndarray) -> np.
         Array of shape (2, s_dim): row 0 is states[0] - s_0 and row 1 is states[N] - s_f.
     """
     ########## Code starts here ##########
-    raise NotImplementedError
+    t_f, s, u = unpack_decision_variables(z)
+    N = u.shape[0]
+
+    return np.array([s[0] - s_0, s[N] - s_f])
     ########## Code ends here ##########
 
 
@@ -72,7 +92,10 @@ def obstacle_constraints(z: np.ndarray, obs_pos: np.ndarray, obs_radius: float,
         Nonnegative entries mean no collision.
     """
     ########## Code starts here ##########
-    raise NotImplementedError
+    t_f, s, u = unpack_decision_variables(z)
+    N = u.shape[0]
+
+    return np.linalg.norm(s[:, :-1] - obs_pos, axis = 1) - (obs_radius + ego_radius)
     ########## Code ends here ##########
 
 

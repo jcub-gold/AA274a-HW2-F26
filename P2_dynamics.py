@@ -45,7 +45,9 @@ class TurtleBotDynamics(Dynamics):
         """
         state_new = TurtleBotState()
         ########## Code starts here ##########
-        raise NotImplementedError
+        state_new.x = state.x + self.dt * control.v * np.cos(state.th)
+        state_new.y = state.y + self.dt * control.v * np.sin(state.th)
+        state_new.th = state.th + self.dt * control.om
         ########## Code ends here ##########
 
         if self.noisy:
@@ -70,7 +72,13 @@ class TurtleBotDynamics(Dynamics):
         num_steps = control_traj.shape[1]
         state_traj = np.zeros((num_rollouts, num_steps + 1, self.n))
         ########## Code starts here ##########
-        raise NotImplementedError
+        state_traj[:, 0, :] = [state_init.x, state_init.y, state_init.th]
+        for i in range(num_rollouts):
+            state = state_init
+            for k in range(num_steps):
+                control = TurtleBotControl(v=control_traj[0, k], om=control_traj[1, k])
+                state = self.feed_forward(state, control)
+                state_traj[i, k + 1, :] = [state.x, state.y, state.th]
         ########## Code ends here ##########
         return state_traj
 
@@ -108,7 +116,7 @@ class DoubleIntegratorDynamics(Dynamics):
         B_stack = np.tile(self.B, (num_rollouts, 1))
 
         ########## Code starts here ##########
-        raise NotImplementedError
+        state_new = A_stack @ state + B_stack @ control
         ########## Code ends here ##########
 
         if self.noisy:
@@ -130,6 +138,11 @@ class DoubleIntegratorDynamics(Dynamics):
         num_steps = control_traj.shape[1]
         state_traj = np.zeros((num_rollouts, num_steps + 1, self.n))
         ########## Code starts here ##########
-        raise NotImplementedError
+        state_traj[:, 0, :] = state_init
+        state = state_traj[:, 0, :].reshape(-1)
+        for k in range(num_steps):
+            control = control_traj[:, k]
+            state = self.feed_forward(state, control)
+            state_traj[:, k + 1, :] = state.reshape(num_rollouts, self.n)
         ########## Code ends here ##########
         return state_traj
